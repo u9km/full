@@ -1,4 +1,4 @@
-name: Build Auto-Download SDK
+name: Final Working Build
 
 on:
   push:
@@ -21,19 +21,25 @@ jobs:
           bash -c "$(curl -fsSL https://raw.githubusercontent.com/theos/theos/master/bin/install-theos)"
           echo "THEOS=~/theos" >> $GITHUB_ENV
 
-      # --- الحل: تحميل الـ SDK تلقائياً من رابط مضمون ---
-      - name: Download SDK Automatically
+      # --- الحل النهائي لمشكلة SDK ---
+      # يقوم هذا الأمر بحذف المجلد الفارغ الذي يسبب المشاكل
+      # ثم يحمل المستودع الرسمي كاملاً (مضمون 100%)
+      - name: Download Official SDKs
         run: |
-          mkdir -p ~/theos/sdks
-          cd ~/theos/sdks
-          echo "🌐 Downloading SDK..."
-          # رابط مباشر لملف SDK 14.5
-          curl -L -o sdk.zip https://github.com/xybp888/iOS-SDKs/releases/download/iOS-14.5/iPhoneOS14.5.sdk.zip
+          # 1. تنظيف المجلد لضمان عدم حدوث تضارب
+          rm -rf ~/theos/sdks
           
-          echo "📂 Unzipping..."
-          unzip -q sdk.zip
-          rm sdk.zip
-          echo "✅ SDK Ready!"
+          # 2. تحميل المستودع الرسمي (Shallow Clone) لتسريع العملية
+          echo "⬇️ Cloning official SDKs..."
+          git clone --depth 1 https://github.com/theos/sdks.git ~/theos/sdks
+          
+          # 3. التأكد من وجود الملفات
+          if [ -d "$HOME/theos/sdks/iPhoneOS14.5.sdk" ]; then
+            echo "✅ SDK 14.5 Installed Successfully"
+          else
+            echo "❌ Failed to clone SDKs"
+            exit 1
+          fi
 
       - name: Prepare Dobby
         run: |
@@ -41,7 +47,7 @@ jobs:
             mv Dobby libdobby.a
             echo "✅ Dobby Prepared"
           else
-            echo "⚠️ Dobby not found"
+            echo "⚠️ Dobby not found (Make sure you uploaded it)"
           fi
 
       - name: Build Package
@@ -53,5 +59,5 @@ jobs:
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: SovereignSecurity_Auto
+          name: SovereignSecurity_Done
           path: packages/*.deb
