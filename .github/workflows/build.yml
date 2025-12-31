@@ -1,4 +1,4 @@
-name: Build Fixed Manual
+name: Build Final Fix
 
 on:
   push:
@@ -16,20 +16,26 @@ jobs:
         with:
           submodules: recursive
 
-      # 1. تثبيت Theos يدوياً (لتجنب خطأ api.github.com)
-      - name: Setup Theos Manually
+      # 1. إعداد Theos الأساسي
+      - name: Setup Theos
         run: |
-          git clone --recursive https://github.com/theos/theos.git ~/theos
+          bash -c "$(curl -fsSL https://raw.githubusercontent.com/theos/theos/master/bin/install-theos)"
           echo "THEOS=~/theos" >> $GITHUB_ENV
 
-      # 2. تحميل SDKs يدوياً
-      - name: Download SDKs
+      # 2. تحميل SDKs (مع تنظيف المجلد أولاً لحل المشكلة الحالية)
+      - name: Force Download SDKs
         run: |
+          # حذف المجلد القديم بالقوة لمنع خطأ 'already exists'
+          rm -rf ~/theos/sdks
+          
+          # تحميل المستودع الرسمي
           git clone --depth 1 https://github.com/theos/sdks.git ~/theos/sdks
+          
+          # التأكد من النجاح
           if [ -d "$HOME/theos/sdks/iPhoneOS14.5.sdk" ]; then
-            echo "✅ SDK Installed"
+            echo "✅ SDK 14.5 Downloaded Successfully"
           else
-            echo "❌ SDK Failed"
+            echo "❌ Failed to download SDK"
             exit 1
           fi
 
@@ -39,7 +45,7 @@ jobs:
             mv Dobby libdobby.a
           fi
 
-      # 3. بناء المشروع (مع تجاهل الأخطاء البسيطة)
+      # 3. بناء المشروع
       - name: Build Package
         run: |
           export THEOS=~/theos
@@ -48,5 +54,5 @@ jobs:
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: SovereignSecurity_Done
+          name: SovereignSecurity_Final
           path: packages/*.deb
