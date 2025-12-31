@@ -1,24 +1,22 @@
-export THEOS=/var/mobile/theos
+# إعدادات المعالج
+ARCHS = arm64 arm64e
+TARGET = iphone:clang:latest:14.0
 
-ARCHS = arm64
-#Add arm64e if it needed
-DEBUG = 0
-FINALPACKAGE = 1
-FOR_RELEASE = 1 
-THEOS_PACKAGE_SCHEME = rootless
 include $(THEOS)/makefiles/common.mk
-TWEAK_NAME = App
 
+TWEAK_NAME = SovereignSecurity
 
-App_FRAMEWORKS = IOKit  UIKit Foundation Security QuartzCore CoreGraphics CoreText  AVFoundation Accelerate GLKit SystemConfiguration GameController
+# بناء ملفاتك فقط
+SovereignSecurity_FILES = metalbiew.mm FarsiType.cpp
 
-App_CCFLAGS = -w -std=gnu++14 -fno-rtti -fno-exceptions -DNDEBUG -Wno-module-import-in-extern-c
+# المكتبات الضرورية لتشغيل المينيو (Metal & Graphics)
+SovereignSecurity_FRAMEWORKS = UIKit Foundation CoreGraphics QuartzCore Metal MetalKit CoreText
+SovereignSecurity_LIBRARIES = z c++
 
-App_CFLAGS = -w -fobjc-arc -Wno-deprecated-declarations -Wno-unused-variable -Wno-unused-value -Wno-unused-variable -Wno-format-security -I./AFNetworking -I./CocoaAsyncSocket -I./Core -I./Core/Categories -I./Core/Mime -I./Core/Responses -I./EasyAES -I./MBProgressHUD -I./SAMKeychain -I./SCLAlertView -I./UDID 
+# إعدادات التجميع (تجاهل الأخطاء لضمان خروج الملف)
+SovereignSecurity_CFLAGS = -fobjc-arc -Wno-deprecated-declarations -Wno-unused-variable -Wno-unused-function
 
-App_FILES = $(wildcard ESP/*.mm) $(wildcard ESP/*.m) $(wildcard *.mm) $(wildcard ESP/*.cpp) $(wildcard ESP/imgui/*.mm) $(wildcard ESP/imgui/*.cpp) $(wildcard SDK/*.cpp) $(wildcard ESP/防禁令/*.mm)  $(wildcard ESP/HOST/*.m)   
-
-
-# GO_EASY_ON_ME = 1
+# ربط مكتبة Dobby (تأكد من وجود ملف libdobby.a)
+SovereignSecurity_LDFLAGS += -L./ -ldobby
 
 include $(THEOS_MAKE_PATH)/tweak.mk
