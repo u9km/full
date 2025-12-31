@@ -1,4 +1,4 @@
-name: Build Menu Only
+name: Build Metal Menu Only
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    name: Build Metal Menu
+    name: Build Tweak
     runs-on: macos-latest
 
     steps:
@@ -21,29 +21,30 @@ jobs:
           bash -c "$(curl -fsSL https://raw.githubusercontent.com/theos/theos/master/bin/install-theos)"
           echo "THEOS=~/theos" >> $GITHUB_ENV
 
-      - name: Download SDKs
+      - name: Download iOS SDKs
         run: |
           git clone --depth 1 https://github.com/theos/sdks.git ~/theos/sdks
           rm -rf ~/theos/sdks/*.sdk
 
       - name: Prepare Dobby Library
         run: |
-          # تحويل ملف Dobby المرفوع إلى مكتبة قابلة للربط
+          # Dobby تحويل الملف المرفوع باسم 
+          # libdobby.a إلى مكتبة
           if [ -f "Dobby" ]; then
             mv Dobby libdobby.a
-            echo "Dobby library prepared."
+            echo "✅ Dobby library renamed successfully."
           else
-            echo "Warning: Dobby file not found!"
+            echo "⚠️ Warning: Dobby file not found! Build might fail."
           fi
 
-      - name: Build Tweak
+      - name: Build Package
         run: |
           export THEOS=~/theos
-          # تجاهل الأخطاء وبناء الحزمة النهائية
+          # تجاهل الأخطاء وبناء الحزمة
           make package FINALPACKAGE=1 DEBUG=0 IGNORE_WARNINGS=1
 
-      - name: Upload Artifact
+      - name: Upload Deb
         uses: actions/upload-artifact@v4
         with:
-          name: Sovereign_Menu_DEB
+          name: SovereignSecurity_Menu
           path: packages/*.deb
