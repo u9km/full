@@ -1,4 +1,4 @@
-name: Soft & Smart Build
+name: Pro Clean Build
 
 on:
   push:
@@ -7,53 +7,66 @@ on:
 
 jobs:
   build:
-    name: Build Tweak Softly
+    name: Build Tweak Pro
     runs-on: macos-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout Source
         uses: actions/checkout@v4
         with:
           submodules: recursive
 
-      - name: Setup Environment
+      # 1. تجهيز البيئة
+      - name: Setup Theos & SDK
         run: |
           git clone --recursive https://github.com/theos/theos.git ~/theos
           echo "THEOS=~/theos" >> $GITHUB_ENV
           rm -rf ~/theos/sdks
           git clone --depth 1 https://github.com/theos/sdks.git ~/theos/sdks
 
-      - name: Organize Files Gently
+      # 2. التنظيف العميق (Deep Clean)
+      - name: Smart Organize & Clean
         run: |
-          # نفك الضغط بهدوء
+          echo "🧹 Unzipping..."
           unzip -q -o "*.zip" || true
           
-          # نطلع الملفات من المجلدات المخفية
+          # إخراج الملفات من سجن مجلد "1"
           if [ -d "1" ]; then 
             mv 1/*.mm . 2>/dev/null || true
             mv 1/*.h . 2>/dev/null || true
             rm -rf 1
           fi
 
-          # نغير اسم المجلد العربي لاسم إنكليزي "لطيف"
+          # تعريب الاسم الصيني (防禁令 -> AntiBan)
           if [ -d "防禁令" ]; then mv "防禁令" AntiBan; fi
           
-          # نمسح أي ملفات قديمة (Backup) حتى لا تسوي مشاكل
+          # --- خطوة الحذف الذكي (Pro Feature) ---
+          # نحذف أي ملف يحتوي اسمه على كلمة "备份" (نسخ احتياطية صينية)
           find . -name "*备份*" -delete
+          # نحذف الملفات المكررة مثل "1 (1).mm"
           find . -name "* (1).mm" -delete
+          
+          echo "✅ Files are clean and ready."
 
+      # 3. تجهيز Dobby
       - name: Prepare Dobby
         run: |
           if [ -f "Dobby" ]; then mv Dobby libdobby.a; fi
           if [ ! -f "libdobby.a" ]; then touch libdobby.a; fi
 
-      - name: Patch Code
+      # 4. تعديل الكود تلقائياً (Auto Patch)
+      - name: Patch Imports
         run: |
-          # نعدل الأسماء بالكود بكل هدوء
+          # تعديل استدعاء المجلد الصيني لاسم AntiBan
           grep -rl "防禁令" . | xargs sed -i '' 's|防禁令|AntiBan|g' 2>/dev/null || true
+          
+          # حذف المسارات الطويلة مثل PUBG/...
           sed -i '' 's|#import "PUBG/.*/\(.*\)"|#import "\1"|g' *.mm *.h 2>/dev/null || true
+          
+          # إصلاح استدعاء SDK
           sed -i '' 's|\.\./SDK.hpp|SDK.hpp|g' metalbiew.h 2>/dev/null || true
 
+      # 5. البناء النهائي
       - name: Build Package
         run: |
           export THEOS=~/theos
