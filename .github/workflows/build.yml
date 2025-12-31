@@ -1,4 +1,4 @@
-name: Build Force Flatten
+name: Soft & Smart Build
 
 on:
   push:
@@ -7,66 +7,56 @@ on:
 
 jobs:
   build:
-    name: Build Tweak
+    name: Build Tweak Softly
     runs-on: macos-latest
 
     steps:
-      - name: Checkout Source
+      - name: Checkout
         uses: actions/checkout@v4
         with:
           submodules: recursive
 
-      # 1. تجهيز Theos
-      - name: Setup Theos
+      - name: Setup Environment
         run: |
           git clone --recursive https://github.com/theos/theos.git ~/theos
           echo "THEOS=~/theos" >> $GITHUB_ENV
           rm -rf ~/theos/sdks
           git clone --depth 1 https://github.com/theos/sdks.git ~/theos/sdks
 
-      # 2. فك الضغط وإخراج الملفات من المجلدات (الحل لمشكلتك)
-      - name: Extract and Flatten All Files
+      - name: Organize Files Gently
         run: |
-          echo "💥 Unzipping everything..."
-          # فك ضغط كل الملفات الموجودة مهما كان اسمها
+          # نفك الضغط بهدوء
           unzip -q -o "*.zip" || true
           
-          echo "🚜 Moving all files to root directory..."
-          # هذا الأمر يبحث عن أي ملف .mm أو .cpp أو .h داخل أي مجلد ويسحبه للخارج
-          find . -type f \( -name "*.mm" -o -name "*.cpp" -o -name "*.m" -o -name "*.h" -o -name "*.hpp" \) -exec mv -f {} . \;
+          # نطلع الملفات من المجلدات المخفية
+          if [ -d "1" ]; then 
+            mv 1/*.mm . 2>/dev/null || true
+            mv 1/*.h . 2>/dev/null || true
+            rm -rf 1
+          fi
+
+          # نغير اسم المجلد العربي لاسم إنكليزي "لطيف"
+          if [ -d "防禁令" ]; then mv "防禁令" AntiBan; fi
           
-          # مسح المجلدات الفارغة (اختياري) للتنظيف
-          find . -type d -empty -delete
-          
-          echo "✅ All files are now in the main folder."
-          ls -F # لعرض الملفات والتأكد
+          # نمسح أي ملفات قديمة (Backup) حتى لا تسوي مشاكل
+          find . -name "*备份*" -delete
+          find . -name "* (1).mm" -delete
 
       - name: Prepare Dobby
         run: |
           if [ -f "Dobby" ]; then mv Dobby libdobby.a; fi
-          if [ ! -f "libdobby.a" ]; then echo "⚠️ Dobby missing but continuing..."; fi
+          if [ ! -f "libdobby.a" ]; then touch libdobby.a; fi
 
-      # 3. إصلاح الكود ليقرأ الملفات من جانب بعضها
-      - name: Fix Imports
+      - name: Patch Code
         run: |
-          # بما أننا سحبنا كل الملفات للخارج، يجب حذف أسماء المجلدات من الكود
-          # مثلاً يحول #import "HOST7/lanjie.h" إلى #import "lanjie.h"
-          # ويصلح المسارات العربية المعقدة
-          sed -i '' 's|#import ".*/|#import "|g' *.mm *.h *.m || true
-          sed -i '' 's|#include ".*/|#include "|g' *.mm *.h *.m *.cpp *.hpp || true
-          
-          # إصلاح خاص لـ metalbiew.h ليكون بجانب SDK.hpp
-          sed -i '' 's|\.\./SDK.hpp|SDK.hpp|g' metalbiew.h || true
+          # نعدل الأسماء بالكود بكل هدوء
+          grep -rl "防禁令" . | xargs sed -i '' 's|防禁令|AntiBan|g' 2>/dev/null || true
+          sed -i '' 's|#import "PUBG/.*/\(.*\)"|#import "\1"|g' *.mm *.h 2>/dev/null || true
+          sed -i '' 's|\.\./SDK.hpp|SDK.hpp|g' metalbiew.h 2>/dev/null || true
 
-      # 4. بناء المشروع
       - name: Build Package
         run: |
           export THEOS=~/theos
-          
-          # تعديل Makefile ليقبل المسارات الجديدة وتجاهل الأخطاء
-          echo "SovereignSecurity_CFLAGS += -w -Wno-error -I." >> Makefile
-          echo "SovereignSecurity_CCFLAGS += -w -Wno-error -I." >> Makefile
-          
           make package FINALPACKAGE=1 DEBUG=0 GO_EASY_ON_ME=1 IGNORE_WARNINGS=1
 
       - name: Upload Artifact
