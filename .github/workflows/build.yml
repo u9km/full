@@ -1,4 +1,4 @@
-name: Final Working Build
+name: Build Fixed Manual
 
 on:
   push:
@@ -16,28 +16,20 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Setup Theos
+      # 1. تثبيت Theos يدوياً (لتجنب خطأ api.github.com)
+      - name: Setup Theos Manually
         run: |
-          bash -c "$(curl -fsSL https://raw.githubusercontent.com/theos/theos/master/bin/install-theos)"
+          git clone --recursive https://github.com/theos/theos.git ~/theos
           echo "THEOS=~/theos" >> $GITHUB_ENV
 
-      # --- الحل النهائي لمشكلة SDK ---
-      # يقوم هذا الأمر بحذف المجلد الفارغ الذي يسبب المشاكل
-      # ثم يحمل المستودع الرسمي كاملاً (مضمون 100%)
-      - name: Download Official SDKs
+      # 2. تحميل SDKs يدوياً
+      - name: Download SDKs
         run: |
-          # 1. تنظيف المجلد لضمان عدم حدوث تضارب
-          rm -rf ~/theos/sdks
-          
-          # 2. تحميل المستودع الرسمي (Shallow Clone) لتسريع العملية
-          echo "⬇️ Cloning official SDKs..."
           git clone --depth 1 https://github.com/theos/sdks.git ~/theos/sdks
-          
-          # 3. التأكد من وجود الملفات
           if [ -d "$HOME/theos/sdks/iPhoneOS14.5.sdk" ]; then
-            echo "✅ SDK 14.5 Installed Successfully"
+            echo "✅ SDK Installed"
           else
-            echo "❌ Failed to clone SDKs"
+            echo "❌ SDK Failed"
             exit 1
           fi
 
@@ -45,15 +37,12 @@ jobs:
         run: |
           if [ -f "Dobby" ]; then
             mv Dobby libdobby.a
-            echo "✅ Dobby Prepared"
-          else
-            echo "⚠️ Dobby not found (Make sure you uploaded it)"
           fi
 
+      # 3. بناء المشروع (مع تجاهل الأخطاء البسيطة)
       - name: Build Package
         run: |
           export THEOS=~/theos
-          # تجاهل الأخطاء وبناء الحزمة
           make package FINALPACKAGE=1 DEBUG=0 IGNORE_WARNINGS=1
 
       - name: Upload Artifact
