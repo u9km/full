@@ -1,0 +1,16 @@
+Package: com.qx
+Name: ERRORVIP
+Description: 
+Section: Tweaks
+Depends: firmware (>= 11.0)
+Conflicts: 
+Replaces: 
+Priority: optional
+Author: @CSxR1
+dev: @CSxR1
+Homepage: 
+Depiction: 
+Maintainer: 
+Icon: 
+Architecture: iphoneos-arm64
+Version: 4.0
