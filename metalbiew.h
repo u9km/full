@@ -18,7 +18,7 @@
 #include <vector>
 #include <array>
 #include <array>
-#import "../SDK.hpp"
+#import "SDK.hpp"
 #include "xor.h"
 #import <Metal/Metal.h>
 #import <MetalKit/MetalKit.h>
